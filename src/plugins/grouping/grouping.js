@@ -1,4 +1,25 @@
-var Grouping = function (instance) {
+
+import {
+  addClass,
+  removeClass,
+  hasClass,
+  index as elementIndex,
+    } from './../../helpers/dom/element';
+import {stopImmediatePropagation} from './../../helpers/dom/event';
+import {registerPlugin} from './../../plugins';
+
+//export {Grouping};
+
+//registerPlugin('grouping', Grouping);
+
+/* jshint sub:true */
+
+/**
+ * @private
+ * @class Grouping
+ * @plugin Grouping
+ */
+function Grouping(instance) {
   /**
    * array of items
    * @type {Array}
@@ -714,7 +735,7 @@ var Grouping = function (instance) {
       if (previousIndexSharesLevel(dataType, index - 1, level, previousIndexGroupId) && previousIndexGroupId != id) {
 
         var expanderButton = document.createElement('DIV');
-        Handsontable.Dom.addClass(expanderButton, classes.expandButton);
+        addClass(expanderButton, classes.expandButton);
         expanderButton.id = 'htExpand-' + previousIndexGroupId;
         expanderButton.appendChild(document.createTextNode('+'));
         expanderButton.setAttribute('data-level', level);
@@ -851,7 +872,7 @@ var Grouping = function (instance) {
         if (typeof classes[i] != 'function') {
           allOccurrences = document.querySelectorAll('.' + classes[i]);
           for (var j = 0, occurrencesLength = allOccurrences.length; j < occurrencesLength; j++) {
-            Handsontable.Dom.removeClass(allOccurrences[j], classes[i]);
+            removeClass(allOccurrences[j], classes[i]);
           }
         }
       }
@@ -860,7 +881,7 @@ var Grouping = function (instance) {
       for (var i = 0, otherClassesLength = otherClasses.length; i < otherClassesLength; i++) {
         allOccurrences = document.querySelectorAll('.' + otherClasses[i]);
         for (var j = 0, occurrencesLength = allOccurrences.length; j < occurrencesLength; j++) {
-          Handsontable.Dom.removeClass(allOccurrences[j], otherClasses[i]);
+          removeClass(allOccurrences[j], otherClasses[i]);
         }
       }
     },
@@ -874,6 +895,9 @@ var Grouping = function (instance) {
       Handsontable.Grouping.initGroups(groupSettings);
     },
     afterGetRowHeader: function (row, TH) {
+      if (!TH.parentNode) {
+        return;
+      }
       var currentRowHidden = false;
       for (var i = 0, levels = hiddenRows.length; i < levels; i++) {
         if (hiddenRows[i] && hiddenRows[i][row] === true) {
@@ -882,9 +906,9 @@ var Grouping = function (instance) {
       }
 
       if (currentRowHidden) {
-        Handsontable.Dom.addClass(TH.parentNode, 'hidden');
-      } else if (!currentRowHidden && Handsontable.Dom.hasClass(TH.parentNode, 'hidden')) {
-        Handsontable.Dom.removeClass(TH.parentNode, 'hidden');
+        addClass(TH.parentNode, 'hidden');
+      } else if (!currentRowHidden && hasClass(TH.parentNode, 'hidden')) {
+        removeClass(TH.parentNode, 'hidden');
       }
 
     },
@@ -905,11 +929,11 @@ var Grouping = function (instance) {
 
       if (currentColHidden) {
         for (var i = 0, colsAmount = thisColgroup.length; i < colsAmount; i++) {
-          Handsontable.Dom.addClass(thisColgroup[i], 'hidden');
+          addClass(thisColgroup[i], 'hidden');
         }
-      } else if (!currentColHidden && Handsontable.Dom.hasClass(thisColgroup[0], 'hidden')) {
+      } else if (!currentColHidden && hasClass(thisColgroup[0], 'hidden')) {
         for (var i = 0, colsAmount = thisColgroup.length; i < colsAmount; i++) {
-          Handsontable.Dom.removeClass(thisColgroup[i], 'hidden');
+          removeClass(thisColgroup[i], 'hidden');
         }
       }
     },
@@ -951,7 +975,7 @@ var Grouping = function (instance) {
                 if (index < -1) {
                   makeGroupIndicatorsForLevel()(index, elem, level);
                 } else {
-                  Handsontable.Dom.removeClass(elem, classes.groupIndicatorContainer);
+                  removeClass(elem, classes.groupIndicatorContainer);
                   oldFn(index, elem, level);
                 }
               };
@@ -965,7 +989,7 @@ var Grouping = function (instance) {
         case 'vertical':
           groupsLevelsList = Handsontable.Grouping.getGroupLevelsByRows();
           getCurrentLevel = function (elem) {
-            return Handsontable.Dom.index(elem) + 1;
+            return elementIndex(elem) + 1;
           };
           getCurrentGroupId = function (row, level) {
             return getGroupByRowAndLevel(row, level).id;
@@ -989,7 +1013,7 @@ var Grouping = function (instance) {
         return {
           button: button,
           addClass: function (className) {
-            Handsontable.Dom.addClass(button, className);
+            addClass(button, className);
           }
         };
       };
@@ -1008,7 +1032,7 @@ var Grouping = function (instance) {
             elem.removeChild(child);
           }
 
-          Handsontable.Dom.addClass(elem, classes.groupIndicatorContainer);
+          addClass(elem, classes.groupIndicatorContainer);
 
           var currentGroupId = getCurrentGroupId(index, level);
 
@@ -1032,7 +1056,7 @@ var Grouping = function (instance) {
           }
 
           if (createLevelTriggers) {
-            var rowInd = Handsontable.Dom.index(elem.parentNode);
+            var rowInd = elementIndex(elem.parentNode);
             if (index === -1 || (index < -1 && rowInd === Handsontable.Grouping.getLevels().cols + 1) ||
                 (rowInd === 0 && Handsontable.Grouping.getLevels().cols === 0)) {
               collapseButton = createButton(elem);
@@ -1043,7 +1067,7 @@ var Grouping = function (instance) {
                 collapseButton.button.appendChild(document.createTextNode(level));
               } else if (index < -1 && rowInd === Handsontable.Grouping.getLevels().cols + 1 ||
                   (rowInd === 0 && Handsontable.Grouping.getLevels().cols === 0)) {
-                var colInd = Handsontable.Dom.index(elem) + 1;
+                var colInd = elementIndex(elem) + 1;
                 collapseButton.button.id = classes.collapseFromLevel("Rows", colInd);
                 collapseButton.button.appendChild(document.createTextNode(colInd));
               }
@@ -1056,7 +1080,7 @@ var Grouping = function (instance) {
             var previousGroupObj = getGroupByIndexAndLevel(index - 1, level);
 
             if (expanderButton && previousGroupObj.hidden) {
-              Handsontable.Dom.addClass(expanderButton, classes.clickable);
+              addClass(expanderButton, classes.clickable);
             }
           }
 
@@ -1125,9 +1149,9 @@ var Grouping = function (instance) {
      * @param TD
      */
     toggleGroupVisibility: function (event, coords, TD) {
-      if (Handsontable.Dom.hasClass(event.target, classes.expandButton) ||
-          Handsontable.Dom.hasClass(event.target, classes.collapseButton) ||
-          Handsontable.Dom.hasClass(event.target, classes.levelTrigger)) {
+      if (hasClass(event.target, classes.expandButton) ||
+          hasClass(event.target, classes.collapseButton) ||
+          hasClass(event.target, classes.levelTrigger)) {
         var element = event.target
           , elemIdSplit = element.id.split('-');
 
@@ -1214,8 +1238,7 @@ var Grouping = function (instance) {
         }
 
         instance.render();
-
-        event.stopImmediatePropagation();
+        stopImmediatePropagation(event);
       }
     },
     /**
@@ -1381,6 +1404,10 @@ var Grouping = function (instance) {
       };
     }
   };
+}
+
+Grouping.prototype.beforeInit = function() {
+
 };
 
 /**
@@ -1441,9 +1468,9 @@ var updateHeaderWidths = function () {
       }
       if (j < Handsontable.Grouping.getLevels().rows + 1) {
         if (j == Handsontable.Grouping.getLevels().rows) {
-          Handsontable.Dom.addClass(rowHeaders[j], 'htGroupColClosest');
+          addClass(rowHeaders[j], 'htGroupColClosest');
         } else {
-          Handsontable.Dom.addClass(rowHeaders[j], 'htGroupCol');
+          addClass(rowHeaders[j], 'htGroupCol');
         }
       }
     }

@@ -192,17 +192,11 @@ describe('Handsontable.Dom', function () {
     var event = document.createEvent('MouseEvents');
     event.initMouseEvent('mousedown',true,true,window, null, null, null, null, null, null, null, null, null ,null, null);
 
-    expect(event.isImmediatePropagationEnabled).toBeUndefined();
-    expect(event.isImmediatePropagationStopped).toBeUndefined();
-
-    Handsontable.Dom.enableImmediatePropagation(event);
-
-    expect(event.isImmediatePropagationEnabled).toBe(true);
-
-    event.stopImmediatePropagation();
+    Handsontable.dom.stopImmediatePropagation(event);
 
     expect(event.isImmediatePropagationEnabled).toBe(false);
-    expect(event.isImmediatePropagationStopped()).toBe(true);
+
+    expect(Handsontable.dom.isImmediatePropagationStopped(event)).toBe(true);
   });
 
   describe('getScrollableElement', function() {
@@ -370,7 +364,7 @@ describe('Handsontable.Dom', function () {
 
       expect(element.className).toBe('test test1 test2 test3');
 
-      Handsontable.Dom.addClass(element, undefined);
+      Handsontable.Dom.addClass(element, '');
 
       expect(element.className).toBe('test test1 test2 test3');
     });
@@ -389,6 +383,10 @@ describe('Handsontable.Dom', function () {
       expect(element.className).toBe('test test1 test2 test3');
 
       Handsontable.Dom.addClass(element, 'test4');
+
+      expect(element.className).toBe('test test1 test2 test3 test4');
+
+      Handsontable.Dom.addClass(element, '');
 
       expect(element.className).toBe('test test1 test2 test3 test4');
     });
@@ -415,7 +413,7 @@ describe('Handsontable.Dom', function () {
 
       expect(element.className).toBe('test2 test3');
 
-      Handsontable.Dom.removeClass(element, undefined);
+      Handsontable.Dom.removeClass(element, '');
 
       expect(element.className).toBe('test2 test3');
     });
@@ -436,6 +434,10 @@ describe('Handsontable.Dom', function () {
       Handsontable.Dom.removeClass(element, ['test', 'test1', 'test4']);
 
       expect(element.className).toBe('test2 test3');
+
+      Handsontable.Dom.removeClass(element, ['test', '', '']);
+
+      expect(element.className).toBe('test2 test3');
     });
   });
 
@@ -451,6 +453,7 @@ describe('Handsontable.Dom', function () {
       expect(Handsontable.Dom.hasClass(element, 'not-exists')).toBe(false);
       expect(Handsontable.Dom.hasClass(element, 'test3')).toBe(true);
       expect(Handsontable.Dom.hasClass(element, 'test')).toBe(true);
+      expect(Handsontable.Dom.hasClass(element, '')).toBe(false);
     });
   });
 
