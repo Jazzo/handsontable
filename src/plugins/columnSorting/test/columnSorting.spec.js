@@ -5,7 +5,6 @@ describe('ColumnSorting', function() {
     this.$container = $('<div id="' + id + '" style="overflow: auto; width: 300px; height: 200px;"></div>').appendTo('body');
 
     this.sortByColumn = function(columnIndex) {
-//      this.$container.find('th span.columnSorting:eq(' + columnIndex + ')').click();
       this.$container.find('th span.columnSorting:eq(' + columnIndex + ')').simulate('click');
     };
   });
@@ -244,6 +243,52 @@ describe('ColumnSorting', function() {
 
     expect(htCore.find('tbody tr:eq(0) td:eq(2)').text()).toMatch(/11\/19\/2011/);
 
+  });
+
+  it('should sort date columns along with empty and null values', function() {
+
+    var hot = handsontable({
+      data: [
+        ["Mercedes", "A 160", "01/14/2006", 6999.9999],
+        ["Citroen", "C4 Coupe", "12/01/2008", 8330],
+        ["Citroen", "C4 Coupe null", null, 8330],
+        ["Citroen", "C4 Coupe empty", "", 8330],
+        ["Audi", "A4 Avant", "11/19/2011", 33900],
+        ["Opel", "Astra", "02/02/2004", 7000],
+        ["BMW", "320i Coupe", "07/24/2011", 30500]
+      ],
+      columns: [
+        {},
+        {},
+        {
+          type: 'date',
+          dateFormat: 'mm/dd/yy'
+        },
+        {
+          type: 'numeric'
+        }
+      ],
+      colHeaders: true,
+      columnSorting: true
+    });
+
+    var htCore = getHtCore();
+
+    expect(htCore.find('tbody tr:eq(0) td:eq(2)').text()).toMatch(/01\/14\/2006/);
+
+    htCore.find('th span.columnSorting:eq(2)').simulate('click');  // DESC sort after first click
+
+    expect(htCore.find('tbody tr:eq(0) td:eq(2)').text()).toMatch(/02\/02\/2004/);
+
+    expect(htCore.find('tbody tr:eq(7) td:eq(2)').text()).toEqual("");
+    expect(htCore.find('tbody tr:eq(8) td:eq(2)').text()).toEqual("");
+
+    htCore.find('th span.columnSorting:eq(2)').simulate('click');  // ASC sort after second click
+
+    expect(htCore.find('tbody tr:eq(0) td:eq(2)').text()).toMatch(/11\/19\/2011/);
+
+    expect(htCore.find('tbody tr:eq(7) td:eq(2)').text()).toEqual("");
+    expect(htCore.find('tbody tr:eq(8) td:eq(2)').text()).toEqual("");
 
   });
 
@@ -370,7 +415,7 @@ describe('ColumnSorting', function() {
     ];
 
     function customIsEmptyRow(row) {
-      var data = getData();
+      var data = getSourceData();
       return data[row].isNew;
     }
 
@@ -984,7 +1029,7 @@ describe('ColumnSorting', function() {
   });
 
 
-  it('should return original data source at specyfied row after sorted', function() {
+  it('should return original data source at specified row after sorted', function() {
     var hot = handsontable({
       data: [
         [1, "Ted", "Right"],
@@ -1016,7 +1061,7 @@ describe('ColumnSorting', function() {
 
   });
 
-  it('should return original data source at specyfied col after sorted', function() {
+  it('should return original data source at specified col after sorted', function() {
     var hot = handsontable({
       data: [
         [1, "Ted", "Right"],
@@ -1101,6 +1146,27 @@ describe('ColumnSorting', function() {
 
   });
 
+  it("should push numeric values before non-numeric values, when sorting ascending using the default sorting function", function() {
+    var hot = handsontable({
+      data: [
+        [1, "Ted", 123],
+        [2, "", "Some"],
+        [3, "", 321],
+        [4, "Sid", "String"],
+        [5, "Jane", 46]
+      ],
+      colHeaders: true,
+      columnSorting: true
+    });
+
+    this.sortByColumn(2);
+    expect(getDataAtCol(2)).toEqual([46, 123, 321, "Some", "String"]);
+
+    this.sortByColumn(2);
+    expect(getDataAtCol(2)).toEqual(["String", "Some", 321, 123, 46]);
+
+  });
+
   it("should add a sorting indicator to the column header after it's been sorted, only if sortIndicator property is set to true", function() {
     var hot = handsontable({
       data: [
@@ -1178,4 +1244,38 @@ describe('ColumnSorting', function() {
     expect(afterValue.indexOf(String.fromCharCode(9650))).toBeGreaterThan(-1);
 
   });
+
+  it("should properly sort the table, when it's scrolled to the far right", function() {
+    var data = [[ "Jasmine Ferguson" , "Britney Carey" , "Kelly Decker" , "Lacey Mcleod" , "Leona Shaffer" , "Kelli Ochoa" , "Adele Roberson" , "Viola Snow" , "Barron Cherry" , "Calhoun Lane" , "Elvia Andrews" , "Katheryn Dale" , "Dorthy Hale" , "Munoz Randall" , "Fields Morse" , "Hubbard Nichols" , "Chang Yang" , "Osborn Anthony" , "Owens Warner" , "Gloria Hampton"   ],  [ "Lane Hill" , "Belinda Mathews" , "York Gray" , "Celina Stone" , "Victoria Mays" , "Angelina Lott" , "Joyce Mason" , "Shawn Rodriguez" , "Susanna Mayo" , "Wolf Fuller" , "Long Hester" , "Dudley Doyle" , "Wilder Sutton" , "Oneal Avery" , "James Mclaughlin" , "Lenora Guzman" , "Mcmahon Sullivan" , "Abby Weeks" , "Beverly Joseph" , "Rosalind Church"   ],  [ "Myrtle Landry" , "Hays Huff" , "Hernandez Benjamin" , "Mclaughlin Garza" , "Franklin Barton" , "Lara Buchanan" , "Ratliff Beck" , "Rosario Munoz" , "Isabelle Dalton" , "Smith Woodard" , "Marjorie Marshall" , "Spears Stein" , "Brianna Bowman" , "Marci Clay" , "Palmer Harrell" , "Ball Levy" , "Shelley Mendoza" , "Morrow Glass" , "Baker Knox" , "Adrian Holman"   ],  [ "Trisha Howell" , "Brooke Harrison" , "Anthony Watkins" , "Ellis Cobb" , "Sheppard Dillon" , "Mathis Bray" , "Foreman Burns" , "Lina Glenn" , "Giles Pollard" , "Weiss Ballard" , "Lynnette Smith" , "Flores Kline" , "Graciela Singleton" , "Santiago Mcclure" , "Claudette Battle" , "Nita Holloway" , "Eula Wolfe" , "Pruitt Stokes" , "Felicia Briggs" , "Melba Bradshaw"   ]];
+
+    var hot = handsontable({
+      data: data,
+      colHeaders: true,
+      columnSorting: true
+    });
+
+    hot.view.wt.wtOverlays.leftOverlay.scrollTo(15);
+    hot.render();
+    hot.sort(15);
+
+    expect(getDataAtCell(0, 15)).toEqual('Ball Levy');
+    expect(getDataAtCell(1, 15)).toEqual('Hubbard Nichols');
+    expect(getDataAtCell(2, 15)).toEqual('Lenora Guzman');
+    expect(getDataAtCell(3, 15)).toEqual('Nita Holloway');
+
+    hot.sort(15);
+
+    expect(getDataAtCell(3, 15)).toEqual('Ball Levy');
+    expect(getDataAtCell(2, 15)).toEqual('Hubbard Nichols');
+    expect(getDataAtCell(1, 15)).toEqual('Lenora Guzman');
+    expect(getDataAtCell(0, 15)).toEqual('Nita Holloway');
+
+    hot.sort(15);
+
+    expect(getDataAtCell(0, 15)).toEqual('Hubbard Nichols');
+    expect(getDataAtCell(1, 15)).toEqual('Lenora Guzman');
+    expect(getDataAtCell(2, 15)).toEqual('Ball Levy');
+    expect(getDataAtCell(3, 15)).toEqual('Nita Holloway');
+  });
+
 });

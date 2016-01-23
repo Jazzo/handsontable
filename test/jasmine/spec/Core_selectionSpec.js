@@ -408,6 +408,23 @@ describe('Core_selection', function () {
     expect(tickEnd).toEqual(1);
   });
 
+  it('should properly select columns, when the user moves the cursor over column headers across two overlays', function () {
+    handsontable({
+      startRows: 5,
+      startCols: 5,
+      colHeaders: true,
+      fixedColumnsLeft: 2
+    });
+
+    this.$container.find('.ht_clone_left tr:eq(0) th:eq(1)').simulate('mousedown');
+    this.$container.find('.ht_clone_left tr:eq(0) th:eq(1)').simulate('mouseover');
+    this.$container.find('.ht_clone_top tr:eq(0) th:eq(2)').simulate('mouseover');
+    this.$container.find('.ht_clone_left tr:eq(0) th:eq(1)').simulate('mouseover');
+    this.$container.find('.ht_clone_left tr:eq(0) th:eq(1)').simulate('mouseup');
+
+    expect(getSelected()).toEqual([0, 1, 4, 1]);
+  });
+
   it('should move focus to selected cell', function () {
     var $input = $('<input>').appendTo(document.body);
     handsontable({
@@ -477,6 +494,64 @@ describe('Core_selection', function () {
     this.$container.find('.ht_master thead th:eq(1)').simulate('mousedown');
     expect(getSelected()).toEqual([0, 0, 49, 0]);
   });
+
+  //it("should set the selection end to the first visible row, when dragging the selection from a cell to a column header", function () {
+  //  var hot = handsontable({
+  //    width: 200,
+  //    height: 200,
+  //    startRows: 20,
+  //    startCols: 20,
+  //    colHeaders: true,
+  //    rowHeaders: true
+  //  });
+  //
+  //  hot.view.wt.scrollVertical(10);
+  //  hot.view.wt.scrollHorizontal(10);
+  //
+  //  hot.render();
+  //
+  //  waits(30);
+  //
+  //  runs(function() {
+  //    $(getCell(12,11)).simulate('mousedown');
+  //    this.$container.find('.ht_clone_top thead th:eq(2)').simulate('mouseover');
+  //  });
+  //
+  //  waits(30);
+  //
+  //  runs(function() {
+  //    expect(getSelected()).toEqual([12, 11, 10, 11]);
+  //  });
+  //});
+
+  //it("should set the selection end to the first visible column, when dragging the selection from a cell to a row header", function () {
+  //  var hot = handsontable({
+  //    width: 200,
+  //    height: 200,
+  //    startRows: 20,
+  //    startCols: 20,
+  //    colHeaders: true,
+  //    rowHeaders: true
+  //  });
+  //
+  //  hot.view.wt.scrollVertical(10);
+  //  hot.view.wt.scrollHorizontal(10);
+  //
+  //  hot.render();
+  //
+  //  waits(30);
+  //
+  //  runs(function() {
+  //    $(getCell(12,11)).simulate('mousedown');
+  //    this.$container.find('.ht_clone_left tbody th:eq(12)').simulate('mouseover');
+  //  });
+  //
+  //  waits(30);
+  //
+  //  runs(function() {
+  //    expect(getSelected()).toEqual([12, 11, 12, 10]);
+  //  });
+  //});
 
   it("should allow to scroll the table when a whole column is selected and table is longer than it's container", function () {
     var errCount = 0;
@@ -597,7 +672,8 @@ describe('Core_selection', function () {
 
   });
 
-  it("should select a cell in a newly added row after automatic row adding, triggered by editing a cell in the last row with minSpareRows > 0", function () {
+  it("should select a cell in a newly added row after automatic row adding, triggered by editing a cell in the last row with minSpareRows > 0, " +
+    "unless editing happened within the fixed bottom rows", function () {
     var hot = handsontable({
       startRows: 5,
       startCols: 2,
@@ -615,6 +691,32 @@ describe('Core_selection', function () {
     runs(function () {
       expect(countRows()).toEqual(6);
       expect(getSelected()).toEqual([5,0,5,0]);
+    });
+  });
+
+  it("should not add new rows after editing a last table cell, if it's whiting the fixed bottom rows", function () {
+    var hot = handsontable({
+      startRows: 5,
+      startCols: 2,
+      fixedRowsBottom: 2,
+      minSpareRows: 1
+    });
+
+    if(!hot.view.wt.wtOverlays.bottomOverlay.clone) {
+      return;
+    }
+
+    selectCell(4,0);
+
+    keyDownUp('enter');
+    waits(100);
+    runs(function() {
+      keyDownUp('enter');
+    });
+    waits(100);
+    runs(function () {
+      expect(countRows()).toEqual(5);
+      expect(getSelected()).toEqual([4,0,4,0]);
     });
   });
 

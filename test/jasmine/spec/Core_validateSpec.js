@@ -177,6 +177,35 @@ describe('Core_validate', function () {
     });
   });
 
+  it('should not throw error after calling validateCells without first argument', function () {
+    var onAfterValidate = jasmine.createSpy('onAfterValidate');
+
+    var hot = handsontable({
+      data: Handsontable.helper.createSpreadsheetData(2, 2),
+      validator: function (value, callb) {
+        if (value == "B1") {
+          callb(false);
+        }
+        else {
+          callb(true);
+        }
+      },
+      afterValidate: onAfterValidate
+    });
+
+    expect(hot.validateCells).not.toThrow();
+
+    waitsFor(function () {
+      return onAfterValidate.calls.length == 4;
+    }, 'Cell validation', 1000);
+
+    runs(function () {
+      expect(this.$container.find('td.htInvalid').length).toEqual(1);
+      expect(this.$container.find('td:not(.htInvalid)').length).toEqual(3);
+    });
+  });
+
+
   it('should add class name `htInvalid` to an cell that does not validate - on validateCells', function () {
     var onAfterValidate = jasmine.createSpy('onAfterValidate');
 
@@ -435,6 +464,52 @@ describe('Core_validate', function () {
     });
   });
 
+  it('should call callback with first argument as `true` if all cells are valid', function () {
+    var onValidate = jasmine.createSpy('onValidate');
+    var onAfterValidate = jasmine.createSpy('onAfterValidate');
+
+    var hot = handsontable({
+      data: Handsontable.helper.createSpreadsheetData(2, 2),
+      validator: function(value, callback) {
+        callback(true);
+      },
+      afterValidate: onAfterValidate
+    });
+
+    hot.validateCells(onValidate);
+
+    waitsFor(function () {
+      return onAfterValidate.calls.length > 0;
+    }, 'Cell validation', 1000);
+
+    runs(function () {
+      expect(onValidate).toHaveBeenCalledWith(true);
+    });
+  });
+
+  it('should call callback with first argument as `false` if one of cells is invalid', function () {
+    var onValidate = jasmine.createSpy('onValidate');
+    var onAfterValidate = jasmine.createSpy('onAfterValidate');
+
+    var hot = handsontable({
+      data: Handsontable.helper.createSpreadsheetData(2, 2),
+      validator: function(value, callback) {
+        callback(false);
+      },
+      afterValidate: onAfterValidate
+    });
+
+    hot.validateCells(onValidate);
+
+    waitsFor(function () {
+      return onAfterValidate.calls.length > 0;
+    }, 'Cell validation', 1000);
+
+    runs(function () {
+      expect(onValidate).toHaveBeenCalledWith(false);
+    });
+  });
+
   it('should not allow for changes where data is invalid (multiple changes, async)', function () {
     var validatedChanges;
 
@@ -644,7 +719,6 @@ describe('Core_validate', function () {
       expect(isEditorVisibleBeforeChange).toBe(true);
       expect(isEditorVisibleAfterChange).toBe(true);
       expect(isEditorVisible()).toBe(false);
-      expect(document.activeElement.nodeName).toEqual('BODY');
     });
   });
 
@@ -874,7 +948,6 @@ describe('Core_validate', function () {
 
     runs(function () {
       expect(validationResult).toBe(false);
-      expect(document.activeElement.nodeName).toEqual('BODY');
       expect(getDataAtCell(0, 0)).toEqual('Ted');
       expect(getCell(0, 0).className).toMatch(/htInvalid/);
     });

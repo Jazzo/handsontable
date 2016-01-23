@@ -1,4 +1,3 @@
-
 import {defineGetter, objectEach} from './../helpers/object';
 import {arrayEach} from './../helpers/array';
 import {getRegistredPluginNames, getPluginName} from './../plugins';
@@ -25,9 +24,9 @@ class BasePlugin {
     privatePool.set(this, {hooks: {}});
     initializedPlugins = null;
 
+    this.pluginName = null;
     this.pluginsInitializedCallbacks = [];
     this.isPluginsReady = false;
-    this.pluginName = null;
     this.enabled = false;
     this.initialized = false;
 
@@ -114,7 +113,6 @@ class BasePlugin {
    */
   callOnPluginsReady(callback) {
     if (this.isPluginsReady) {
-      this.pluginsInitializedCallbacks.length = 0;
       callback();
     } else {
       this.pluginsInitializedCallbacks.push(callback);
@@ -128,6 +126,7 @@ class BasePlugin {
    */
   onAfterPluginsInitialized() {
     arrayEach(this.pluginsInitializedCallbacks, (callback) => callback());
+    this.pluginsInitializedCallbacks.length = 0;
     this.isPluginsReady = true;
   }
 
@@ -144,7 +143,19 @@ class BasePlugin {
       if (!this.enabled && this.isEnabled()) {
         this.enablePlugin();
       }
+      if (this.enabled && this.isEnabled()) {
+        this.updatePlugin();
+      }
     }
+  }
+
+  /**
+   * Update the plugin's settings
+   *
+   * @private
+   */
+  updatePlugin() {
+
   }
 
   /**
@@ -155,8 +166,16 @@ class BasePlugin {
       this.eventManager.destroy();
     }
     this.clearHooks();
+
+    objectEach(this, (value, property) => {
+      if (property !== 'hot') {
+        this[property] = null;
+      }
+    });
     delete this.hot;
   }
 }
 
 export default BasePlugin;
+
+Handsontable.plugins.BasePlugin = BasePlugin;

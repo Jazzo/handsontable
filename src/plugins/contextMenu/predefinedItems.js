@@ -33,6 +33,18 @@ export function predefinedItems() {
   return items;
 }
 
+/**
+ * Add new predefined menu item to the collection.
+ *
+ * @param {String} key Menu command id.
+ * @param {Object} item Object command descriptor.
+ */
+export function addItem(key, item) {
+  if (ITEMS.indexOf(key) === -1) {
+    _predefinedItems[key] = item;
+  }
+}
+
 const _predefinedItems = {
   [SEPARATOR]: {
     name: SEPARATOR
@@ -47,12 +59,14 @@ const _predefinedItems = {
     disabled: function() {
       let selected = getValidSelection(this);
 
-      if (!selected) {
+      if (!selected || this.countRows() >= this.getSettings().maxRows) {
         return true;
       }
-      let entireColumnSelection = [0, selected[1], this.countRows() - 1, selected[1]];
 
-      return entireColumnSelection.join(',') === selected.join(',');
+      let rowCount = this.countRows();
+      let entireColumnSelection = [0, selected[1], rowCount - 1, selected[1]];
+
+      return (entireColumnSelection.join(',') === selected.join(',')) && rowCount > 1;
     },
     hidden: function() {
       return !this.getSettings().allowInsertRow;
@@ -68,12 +82,14 @@ const _predefinedItems = {
     disabled: function() {
       let selected = getValidSelection(this);
 
-      if (!selected) {
+      if (!selected || this.countRows() >= this.getSettings().maxRows) {
         return true;
       }
-      let entireColumnSelection = [0, selected[1], this.countRows() - 1, selected[1]];
 
-      return entireColumnSelection.join(',') === selected.join(',');
+      let rowCount = this.countRows();
+      let entireColumnSelection = [0, selected[1], rowCount - 1, selected[1]];
+
+      return (entireColumnSelection.join(',') === selected.join(',')) && rowCount > 1;
     },
     hidden: function() {
       return !this.getSettings().allowInsertRow;
@@ -135,7 +151,9 @@ const _predefinedItems = {
     callback: function(key, selection) {
       let column = selection.start.col;
 
-      rangeEach(Math.max(selection.start.row, selection.end.row), (row) => this.setDataAtCell(row, column, ''));
+      if (this.countRows()) {
+        this.populateFromArray(0, column, [[null]], Math.max(selection.start.row, selection.end.row), column);
+      }
     },
     disabled: function() {
       let selected = getValidSelection(this);

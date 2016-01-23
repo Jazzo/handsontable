@@ -6,11 +6,11 @@ import {
   getWindowScrollTop,
   hasClass,
   outerWidth,
+  innerHeight,
   removeClass,
   setOverlayPosition,
-    } from './../../../../helpers/dom/element';
+} from './../../../../helpers/dom/element';
 import {WalkontableOverlay} from './_base';
-
 
 /**
  * @class WalkontableLeftOverlay
@@ -43,8 +43,9 @@ class WalkontableLeftOverlay extends WalkontableOverlay {
     }
     let overlayRoot = this.clone.wtTable.holder.parentNode;
     let headerPosition = 0;
+    let preventOverflow = this.wot.getSetting('preventOverflow');
 
-    if (this.trimmingContainer === window) {
+    if (this.trimmingContainer === window && (!preventOverflow || preventOverflow !== 'horizontal')) {
       let box = this.wot.wtTable.hider.getBoundingClientRect();
       let left = Math.ceil(box.left);
       let right = Math.ceil(box.right);
@@ -68,6 +69,8 @@ class WalkontableLeftOverlay extends WalkontableOverlay {
       headerPosition = this.getScrollPosition();
     }
     this.adjustHeaderBordersPosition(headerPosition);
+
+    this.adjustElementsSize();
   }
 
   /**
@@ -88,7 +91,7 @@ class WalkontableLeftOverlay extends WalkontableOverlay {
    * Triggers onScroll hook callback
    */
   onScroll() {
-    this.wot.getSetting('onScrollHorizontally');
+    this.wot.getSetting('onScrollVertically');
   }
 
   /**
@@ -118,10 +121,10 @@ class WalkontableLeftOverlay extends WalkontableOverlay {
   adjustElementsSize(force = false) {
     if (this.needFullRender || force) {
       this.adjustRootElementSize();
-      this.adjustRootChildsSize();
+      this.adjustRootChildrenSize();
 
       if (!force) {
-        this.isElementSizesAdjusted = true;
+        this.areElementSizesAdjusted = true;
       }
     }
   }
@@ -131,13 +134,18 @@ class WalkontableLeftOverlay extends WalkontableOverlay {
    */
   adjustRootElementSize() {
     let masterHolder = this.wot.wtTable.holder;
-    let scrollbarHeight = masterHolder.clientHeight !== masterHolder.offsetHeight ? getScrollbarWidth() : 0;
+    let scrollbarHeight = masterHolder.clientHeight === masterHolder.offsetHeight ? 0 : getScrollbarWidth();
     let overlayRoot = this.clone.wtTable.holder.parentNode;
     let overlayRootStyle = overlayRoot.style;
+    let preventOverflow = this.wot.getSetting('preventOverflow');
     let tableWidth;
 
-    if (this.trimmingContainer !== window) {
-      overlayRootStyle.height = this.wot.wtViewport.getWorkspaceHeight() - scrollbarHeight + 'px';
+    if (this.trimmingContainer !== window || preventOverflow === 'vertical') {
+      let height = this.wot.wtViewport.getWorkspaceHeight() - scrollbarHeight;
+
+      height = Math.min(height, innerHeight(this.wot.wtTable.wtRootElement));
+
+      overlayRootStyle.height = height + 'px';
     }
     this.clone.wtTable.holder.style.height = overlayRootStyle.height;
 
@@ -148,7 +156,7 @@ class WalkontableLeftOverlay extends WalkontableOverlay {
   /**
    * Adjust overlay root childs size
    */
-  adjustRootChildsSize() {
+  adjustRootChildrenSize() {
     let scrollbarWidth = getScrollbarWidth();
 
     this.clone.wtTable.hider.style.height = this.hider.style.height;
@@ -166,7 +174,7 @@ class WalkontableLeftOverlay extends WalkontableOverlay {
   applyToDOM() {
     let total = this.wot.getSetting('totalColumns');
 
-    if (!this.isElementSizesAdjusted) {
+    if (!this.areElementSizesAdjusted) {
       this.adjustElementsSize();
     }
     if (typeof this.wot.wtViewport.columnsRenderCalculator.startPosition === 'number') {
@@ -230,12 +238,14 @@ class WalkontableLeftOverlay extends WalkontableOverlay {
    * @returns {Number}
    */
   getTableParentOffset() {
-    if (this.trimmingContainer === window) {
-      return this.wot.wtTable.holderOffset.left;
+    let preventOverflow = this.wot.getSetting('preventOverflow');
+    let offset = 0;
 
-    } else {
-      return 0;
+    if (!preventOverflow && this.trimmingContainer === window) {
+      offset = this.wot.wtTable.holderOffset.left;
     }
+
+    return offset;
   }
 
   /**
@@ -278,3 +288,5 @@ class WalkontableLeftOverlay extends WalkontableOverlay {
 export {WalkontableLeftOverlay};
 
 window.WalkontableLeftOverlay = WalkontableLeftOverlay;
+
+WalkontableOverlay.registerOverlay(WalkontableOverlay.CLONE_LEFT, WalkontableLeftOverlay);
